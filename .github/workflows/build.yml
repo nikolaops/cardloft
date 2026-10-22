@@ -1,0 +1,89 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Test
+        run: node tests/state.test.js
+
+      - name: Check tag matches VERSION
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: test "${GITHUB_REF_NAME#v}" = "$(cat VERSION)"
+
+      - name: Build macOS app
+        run: ./scripts/build-macos.sh
+
+      - name: Build Windows app
+        run: ./scripts/build-windows.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cardloft
+          path: build/dist/*
+          if-no-files-found: error
+
+  smoke-test-windows:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cardloft
+          path: dist
+
+      # The app saves its workspace on startup, so a valid workspace.json proves
+      # that WebView2, the web UI and the native storage bridge all work.
+      - name: Launch Cardloft and wait for the workspace to be saved
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem dist -Filter '*-windows.zip' | Select-Object -First 1
+          Expand-Archive $zip.FullName -DestinationPath app
+          $workspace = Join-Path $env:APPDATA 'Cardloft\workspace.json'
+          $process = Start-Process -FilePath 'app\Cardloft\Cardloft.exe' -PassThru
+          $deadline = (Get-Date).AddSeconds(60)
+          while (-not (Test-Path $workspace) -and (Get-Date) -lt $deadline) {
+            if ($process.HasExited) { throw "Cardloft exited with code $($process.ExitCode)" }
+            Start-Sleep -Seconds 1
+          }
+          if (-not (Test-Path $workspace)) { throw 'Cardloft did not save a workspace within 60 seconds' }
+          $data = Get-Content $workspace -Raw | ConvertFrom-Json
+          Write-Host "Saved workspace with $($data.projects.Count) project(s)"
+          Stop-Process -Id $process.Id
+
+  release:
+    needs: [build, smoke-test-windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cardloft
+          path: dist
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Cardloft $GITHUB_REF_NAME" \
+            --generate-notes

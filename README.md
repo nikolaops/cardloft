@@ -1,45 +1,72 @@
-# Local Ticketing
+# Cardloft
 
-Jednostavna offline ticketing aplikacija za macOS. Sadrži:
+A private, offline kanban board for macOS and Windows. No account, no cloud, no tracking — your projects live in a single JSON file on your own computer.
 
-- Kanban board sa drag-and-drop karticama
-- sprint board i odvojeni backlog
-- custom kolone, njihov redosled i boje
-- tikete sa opisom, privatnim notes, prioritetom i komentarima
-- custom labele u bojama
-- više potpuno odvojenih projekata i brzo prebacivanje između njih
-- lista i management projekata direktno u sidebar-u
-- editovanje naziva i boje, uz vizuelni opcioni emoji picker za svaki projekat
-- finalni naslov projekta u formatu `emoji + razmak + projectName`
-- centrirana Kanban/Sprint/Backlog navigacija iznad ticket kolona
-- Labels dugme u board navigaciji za direktan pristup project labelama
-- jasno Delete ticket dugme sa native macOS confirmation dijalogom
-- project-scoped Notes/rokovnik sa sticky note karticama, bojama i edit/delete opcijama
-- svaki projekat ima potpuno odvojenu Notes sesiju
-- pouzdan pointer drag-and-drop tiketa između kolona
-- standardna macOS title traka za normalno pomeranje prozora
-- potpuno lokalno čuvanje podataka
+## Features
 
-## Instalacija
+- Kanban board with drag-and-drop cards
+- Sprint board and a separate backlog
+- Custom columns with their own order and colors
+- Tickets with description, private notes, priority, labels and comments
+- Multiple fully separated projects, managed from the sidebar, each with a name, color and optional emoji
+- Per-project notebook with colored sticky notes
+- Native confirmation dialogs before anything is deleted
+- Everything stored locally
 
-Otvori `build/Local-Ticketing-1.5.0.dmg`, pa prevuci **Local Ticketing** u **Applications**.
+## Download
 
-Aplikacija je ad-hoc potpisana za lokalnu upotrebu, ali nije notarizovana Apple Developer sertifikatom. Ako Gatekeeper prikaže upozorenje, uradi Control-click na aplikaciju, izaberi **Open**, pa potvrdi još jednom.
+Get the latest version from the [Releases](https://github.com/nikolaops/cardloft/releases/latest) page.
 
-Podaci se čuvaju u:
+### macOS 13 or newer
 
-```text
-~/Library/Application Support/LocalTicketing/workspace.json
-```
+1. Open `Cardloft-<version>-macos.dmg` and drag **Cardloft** into **Applications**.
+2. The app is not notarized by Apple, so the first launch is blocked. Open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to the Cardloft message.
 
-Promene se upisuju i u native JSON fajl i u WebKit lokalni storage, tako da običan reload ne vraća board na početno stanje. Stariji single-project podaci se pri prvom pokretanju automatski migriraju u prvi projekat.
+Runs natively on Apple silicon and Intel Macs.
 
-## Build
+### Windows 10 or 11
 
-Potreban je macOS sa Command Line Tools. Nisu potrebni Docker, Xcode projekat, Node moduli ili internet.
+1. Unzip `Cardloft-<version>-windows.zip` to a folder of your choice, for example `C:\Users\<you>\Apps\Cardloft`.
+2. Run `Cardloft.exe`. The app is not code-signed yet, so SmartScreen may warn you; click **More info → Run anyway**.
+
+Cardloft uses the Microsoft Edge WebView2 Runtime, which is already installed on Windows 11 and up-to-date Windows 10. If it is missing, the app offers to open the download page.
+
+## Where your data lives
+
+| Platform | Location |
+| --- | --- |
+| macOS | `~/Library/Application Support/Cardloft/workspace.json` |
+| Windows | `%APPDATA%\Cardloft\workspace.json` |
+
+Back up or move that file to keep your boards. Every change is written to the file and to the web view's local storage, so a reload never loses work.
+
+## Building from source
+
+Both builds run on macOS with Command Line Tools installed. The Windows build also needs the [.NET SDK](https://dotnet.microsoft.com/download) (8 or newer).
 
 ```bash
-./build.sh
+node tests/state.test.js      # web UI state tests
+./scripts/build-macos.sh      # build/dist/Cardloft-<version>-macos.dmg
+./scripts/build-windows.sh    # build/dist/Cardloft-<version>-windows.zip
 ```
 
-Build skripta kompajlira mali native AppKit/WebKit host, generiše `.app`, ad-hoc ga potpisuje i pakuje DMG u `build/` direktorijum.
+### Project layout
+
+| Path | Contents |
+| --- | --- |
+| `web/` | The app itself: HTML, CSS and JavaScript shared by both platforms |
+| `macos/` | Native AppKit + WebKit host, app icon renderer and `Info.plist` |
+| `windows/` | Native WinForms + WebView2 host (.NET Framework 4.8, built into Windows) |
+| `scripts/` | Build scripts |
+| `tests/` | Node tests for state persistence and migration |
+
+## Releasing
+
+1. Update `VERSION`.
+2. Commit, then tag and push: `git tag v$(cat VERSION) && git push origin main --tags`.
+
+GitHub Actions builds both apps, launches the Windows build on a Windows runner as a smoke test, and publishes a release with the DMG and the zip attached.
+
+## License
+
+[MIT](LICENSE)

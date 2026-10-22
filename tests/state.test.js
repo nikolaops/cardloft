@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
-const source = fs.readFileSync(path.join(__dirname, "../Resources/app.js"), "utf8");
+const source = fs.readFileSync(path.join(__dirname, "../web/app.js"), "utf8");
 
 function project(name, id, ticketTitle) {
   return {
@@ -25,7 +25,7 @@ function project(name, id, ticketTitle) {
 
 function runApp({ saved, injected }) {
   const values = new Map();
-  if (saved) values.set("local-ticketing-workspace", JSON.stringify(saved));
+  if (saved) values.set("cardloft-workspace", JSON.stringify(saved));
   const nodes = {
     "#app": { innerHTML: "" },
     "#modal-root": { innerHTML: "" },
@@ -41,7 +41,7 @@ function runApp({ saved, injected }) {
     setItem(key, value) { values.set(key, value); }
   };
   const context = {
-    window: { __LOCAL_TICKETING_DATA__: injected },
+    window: { __CARDLOFT_DATA__: injected },
     document,
     localStorage,
     crypto,
@@ -54,7 +54,7 @@ function runApp({ saved, injected }) {
   };
   vm.runInNewContext(source, context);
   return {
-    data: JSON.parse(values.get("local-ticketing-workspace")),
+    data: JSON.parse(values.get("cardloft-workspace")),
     html: nodes["#app"].innerHTML
   };
 }

@@ -5,17 +5,17 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Local Ticketing</string>
+    <string>Cardloft</string>
     <key>CFBundleExecutable</key>
-    <string>LocalTicketing</string>
+    <string>Cardloft</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon.png</string>
     <key>CFBundleIdentifier</key>
-    <string>local.codetiq.ticketing</string>
+    <string>io.github.nikolaops.cardloft</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Local Ticketing</string>
+    <string>Cardloft</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

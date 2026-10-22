@@ -51,7 +51,7 @@
       sprints: includeExamples ? [sprint] : [],
       tickets: includeExamples ? [
         {
-          id: uid(), number: 1, title: "Welcome to Local Ticketing",
+          id: uid(), number: 1, title: "Welcome to Cardloft",
           description: "Open this ticket to add notes, comments, labels and sprint details.", notes: "",
           columnId: columns[0].id, sprintId: sprint.id, labelIds: [labels[0].id], priority: "medium",
           comments: [], createdAt: now(), updatedAt: now()
@@ -122,7 +122,7 @@
     return portfolio;
   }
 
-  let portfolio = normalize(selectStoredCandidate(readFallback(), window.__LOCAL_TICKETING_DATA__));
+  let portfolio = normalize(selectStoredCandidate(readFallback(), window.__CARDLOFT_DATA__));
   let state = portfolio.projects.find(project => project.id === portfolio.activeProjectId);
   const ui = { screen: "kanban", selectedSprintId: defaultSprintId(), settingsTab: "project" };
   let toastTimer;
@@ -130,7 +130,7 @@
   let suppressCardClickUntil = 0;
 
   function readFallback() {
-    try { return JSON.parse(localStorage.getItem("local-ticketing-workspace")); } catch (_) { return null; }
+    try { return JSON.parse(localStorage.getItem("cardloft-workspace")); } catch (_) { return null; }
   }
 
   function selectStoredCandidate(localCopy, nativeCopy) {
@@ -150,9 +150,10 @@
     portfolio.activeProjectId = state.id;
     portfolio.updatedAt = now();
     const json = JSON.stringify(portfolio);
-    try { localStorage.setItem("local-ticketing-workspace", json); } catch (_) {}
+    try { localStorage.setItem("cardloft-workspace", json); } catch (_) {}
     try {
       if (window.webkit?.messageHandlers?.storage) window.webkit.messageHandlers.storage.postMessage(json);
+      else if (window.chrome?.webview) window.chrome.webview.postMessage(json);
     } catch (_) {}
     if (message) toast(message);
   }
@@ -233,7 +234,7 @@
       <div class="shell">
         <aside class="sidebar">
           <div class="sidebar-brand">
-            <strong>Local Ticketing</strong>
+            <strong>Cardloft</strong>
             <span>Offline workspace</span>
           </div>
           <div class="projects-heading"><span>Projects</span><button data-action="new-project" title="Create project">${icons.plus}</button></div>
@@ -890,7 +891,7 @@
     save("Sprint deleted"); refreshSettings();
   }
 
-  window.ticketingNewTicket = () => showNewTicket();
+  window.cardloftNewTicket = () => showNewTicket();
   save();
   render();
 })();

@@ -22,7 +22,7 @@
 
     NSString *savedWorkspace = [self savedWorkspaceJSON];
     if (savedWorkspace.length > 0) {
-        NSString *bootstrap = [NSString stringWithFormat:@"window.__LOCAL_TICKETING_DATA__ = %@;", savedWorkspace];
+        NSString *bootstrap = [NSString stringWithFormat:@"window.__CARDLOFT_DATA__ = %@;", savedWorkspace];
         WKUserScript *script = [[WKUserScript alloc] initWithSource:bootstrap
                                                      injectionTime:WKUserScriptInjectionTimeAtDocumentStart
                                                   forMainFrameOnly:YES];
@@ -43,7 +43,7 @@
                                              styleMask:style
                                                backing:NSBackingStoreBuffered
                                                  defer:NO];
-    self.window.title = @"Local Ticketing";
+    self.window.title = @"Cardloft";
     self.window.titlebarAppearsTransparent = NO;
     self.window.movableByWindowBackground = YES;
     self.window.minSize = NSMakeSize(980, 660);
@@ -57,7 +57,7 @@
         [self.webView loadFileURL:indexURL allowingReadAccessToURL:resourceURL];
     } else {
         NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = @"Local Ticketing could not start";
+        alert.messageText = @"Cardloft could not start";
         alert.informativeText = @"The application resources are missing. Please reinstall the app.";
         [alert runModal];
     }
@@ -74,7 +74,7 @@
                       initiatedByFrame:(WKFrameInfo *)frame
                      completionHandler:(void (^)(void))completionHandler {
     NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = @"Local Ticketing";
+    alert.messageText = @"Cardloft";
     alert.informativeText = message;
     [alert addButtonWithTitle:@"OK"];
     [alert beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse response) {
@@ -117,15 +117,35 @@
     [data writeToURL:fileURL options:NSDataWritingAtomic error:nil];
 }
 
-- (NSURL *)workspaceFileURL {
+- (NSURL *)workspaceFileURLInFolder:(NSString *)folder {
     NSURL *applicationSupport = [[[NSFileManager defaultManager]
         URLsForDirectory:NSApplicationSupportDirectory
                inDomains:NSUserDomainMask] firstObject];
-    return [[applicationSupport URLByAppendingPathComponent:@"LocalTicketing" isDirectory:YES]
+    return [[applicationSupport URLByAppendingPathComponent:folder isDirectory:YES]
         URLByAppendingPathComponent:@"workspace.json"];
 }
 
+- (NSURL *)workspaceFileURL {
+    return [self workspaceFileURLInFolder:@"Cardloft"];
+}
+
+// Versions before the Cardloft rename stored data under "LocalTicketing".
+- (void)migrateLegacyWorkspace {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSURL *fileURL = [self workspaceFileURL];
+    NSURL *legacyURL = [self workspaceFileURLInFolder:@"LocalTicketing"];
+    if ([fileManager fileExistsAtPath:fileURL.path] || ![fileManager fileExistsAtPath:legacyURL.path]) {
+        return;
+    }
+    [fileManager createDirectoryAtURL:[fileURL URLByDeletingLastPathComponent]
+          withIntermediateDirectories:YES
+                           attributes:nil
+                                error:nil];
+    [fileManager copyItemAtURL:legacyURL toURL:fileURL error:nil];
+}
+
 - (NSString *)savedWorkspaceJSON {
+    [self migrateLegacyWorkspace];
     NSData *data = [NSData dataWithContentsOfURL:[self workspaceFileURL]];
     if (!data) { return nil; }
     id object = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
@@ -135,7 +155,7 @@
 }
 
 - (void)newTicket:(id)sender {
-    [self.webView evaluateJavaScript:@"window.ticketingNewTicket && window.ticketingNewTicket();"
+    [self.webView evaluateJavaScript:@"window.cardloftNewTicket && window.cardloftNewTicket();"
                    completionHandler:nil];
 }
 
@@ -147,11 +167,11 @@
     NSMenu *menuBar = [[NSMenu alloc] init];
 
     NSMenuItem *appMenuItem = [[NSMenuItem alloc] init];
-    NSMenu *appMenu = [[NSMenu alloc] initWithTitle:@"Local Ticketing"];
-    [appMenu addItemWithTitle:@"About Local Ticketing" action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
+    NSMenu *appMenu = [[NSMenu alloc] initWithTitle:@"Cardloft"];
+    [appMenu addItemWithTitle:@"About Cardloft" action:@selector(orderFrontStandardAboutPanel:) keyEquivalent:@""];
     [appMenu addItem:[NSMenuItem separatorItem]];
-    [appMenu addItemWithTitle:@"Hide Local Ticketing" action:@selector(hide:) keyEquivalent:@"h"];
-    [appMenu addItemWithTitle:@"Quit Local Ticketing" action:@selector(terminate:) keyEquivalent:@"q"];
+    [appMenu addItemWithTitle:@"Hide Cardloft" action:@selector(hide:) keyEquivalent:@"h"];
+    [appMenu addItemWithTitle:@"Quit Cardloft" action:@selector(terminate:) keyEquivalent:@"q"];
     appMenuItem.submenu = appMenu;
     [menuBar addItem:appMenuItem];
 

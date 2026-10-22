@@ -2,6 +2,10 @@
 
 A private, offline kanban board for macOS and Windows. No account, no cloud, no tracking — your projects live in a single JSON file on your own computer.
 
+**Website:** https://nikolaops.github.io/cardloft/
+
+![Cardloft kanban board](docs/assets/screenshot-light.png)
+
 ## Features
 
 - Kanban board with drag-and-drop cards
@@ -59,6 +63,7 @@ node tests/state.test.js      # web UI state tests
 | `windows/` | Native WinForms + WebView2 host (.NET Framework 4.8, built into Windows) |
 | `scripts/` | Build scripts |
 | `tests/` | Node tests for state persistence and migration |
+| `docs/` | Landing page, published with GitHub Pages |
 
 ## Releasing
 
